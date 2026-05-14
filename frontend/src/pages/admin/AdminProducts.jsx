@@ -30,7 +30,7 @@ function AddBrandModal({ onClose, onAdded }) {
     if (!form.name) { setError("Tên brand không được để trống"); return; }
     setLoading(true);
     try {
-      const res = await api.post("/brands", form);
+      const res = await api.post("/brands/", form);
       onAdded(res.data);
     } catch (err) {
       setError(err.response?.data?.detail || "Thêm brand thất bại");
@@ -126,7 +126,7 @@ export default function AdminProducts() {
     setLoading(true);
     const params = { page: p, limit: LIMIT };
     if (cat) params.category = cat;
-    api.get("/products", { params })
+    api.get("/products/", { params })
       .then(res => {
         setProducts(res.data?.items || []);
         setTotal(res.data?.total || 0);
