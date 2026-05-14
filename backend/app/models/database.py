@@ -6,10 +6,12 @@ from sqlalchemy.orm import sessionmaker, relationship, declarative_base
 from datetime import datetime
 from app.config import settings
 
+# Render provides "postgres://" but SQLAlchemy 2.x requires "postgresql://"
 _db_url = settings.database_url.replace("postgres://", "postgresql://", 1)
 engine = create_engine(_db_url)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
+
 
 class User(Base):
     __tablename__ = "users"
