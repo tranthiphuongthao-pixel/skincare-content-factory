@@ -301,44 +301,98 @@ export default function ProductDetail() {
         {/* Video reviews */}
         {videos.length > 0 && (
           <div className="bg-white border border-border rounded-[24px] p-6">
-            <h2 className="font-display text-xl font-semibold mb-5">Video reviews</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-              {videos.map(vid => (
-                <div key={vid.id} className="flex flex-col gap-2">
-                  <div className="aspect-[9/16] bg-gradient-to-br from-accent/20 to-accent-dark/10 rounded-[16px] relative overflow-hidden flex items-center justify-center">
-                    {vid.thumbnail_url ? (
-                      <img src={vid.thumbnail_url} alt={vid.title} className="absolute inset-0 w-full h-full object-cover" />
-                    ) : (
-                      <Play size={24} className="text-accent-dark/50" />
-                    )}
-                    {vid.skin_type && (
-                      <span className="absolute top-2 left-2 badge bg-white/90 text-text-primary text-[9px] px-1.5 py-0.5">
-                        {vid.skin_type}
-                      </span>
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-xs font-medium text-text-primary line-clamp-1">{vid.user?.username || "—"}</p>
-                    <div className="flex items-center gap-1 mt-0.5">
-                      <Star size={10} className="fill-amber-400 text-amber-400" />
-                      <span className="text-[10px] text-text-muted">{vid.overall_rating || "—"}</span>
-                      {vid.usage_duration_weeks && (
-                        <span className="text-[10px] text-text-muted">· {vid.usage_duration_weeks}w</span>
+            <h2 className="font-display text-xl font-semibold mb-5">Video reviews từ cộng đồng</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {videos.map(vid => {
+                const hashtags = Array.isArray(vid.script?.hashtags) ? vid.script.hashtags : [];
+                const scenes = Array.isArray(vid.script?.scenes) ? vid.script.scenes : [];
+                return (
+                <div key={vid.id} className="border border-border rounded-[18px] overflow-hidden flex flex-col bg-white">
+                  <div className="grid grid-cols-[120px_1fr]">
+                    {/* Thumbnail / video link */}
+                    <div className="aspect-[9/16] bg-gradient-to-br from-accent/20 to-accent-dark/10 relative overflow-hidden flex items-center justify-center">
+                      {vid.thumbnail_url ? (
+                        <img src={vid.thumbnail_url} alt={vid.title} className="absolute inset-0 w-full h-full object-cover" />
+                      ) : (
+                        <Play size={24} className="text-accent-dark/50" />
+                      )}
+                      {vid.video_url && (
+                        <a href={vid.video_url} target="_blank" rel="noopener noreferrer"
+                          className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/30 transition-colors">
+                          <Play size={32} className="text-white opacity-0 hover:opacity-100 transition-opacity" />
+                        </a>
                       )}
                     </div>
-                    {vid.video_url && (
-                      <a
-                        href={vid.video_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-1 inline-block text-[10px] text-accent-dark font-medium hover:underline"
-                      >
-                        Xem video →
-                      </a>
-                    )}
+
+                    {/* Script content + review */}
+                    <div className="p-3 flex flex-col gap-2 min-w-0">
+                      {vid.script?.hook && (
+                        <p className="text-sm font-display font-semibold text-text-primary line-clamp-2 leading-snug">
+                          "{vid.script.hook}"
+                        </p>
+                      )}
+                      <div className="flex items-center gap-2 text-xs flex-wrap">
+                        <span className="font-medium text-text-primary truncate">{vid.user?.username || "—"}</span>
+                        {vid.review?.overall_rating != null && (
+                          <span className="flex items-center gap-0.5 shrink-0">
+                            <Star size={10} className="fill-amber-400 text-amber-400" />
+                            <span className="text-text-muted">{vid.review.overall_rating}</span>
+                          </span>
+                        )}
+                        {vid.review?.skin_type && (
+                          <span className="badge bg-bg-surface-2 text-text-muted text-[9px]">{vid.review.skin_type}</span>
+                        )}
+                      </div>
+                      {vid.review?.short_note && (
+                        <p className="text-xs text-text-muted line-clamp-3 leading-relaxed">{vid.review.short_note}</p>
+                      )}
+                      {vid.video_url && (
+                        <a href={vid.video_url} target="_blank" rel="noopener noreferrer"
+                          className="text-xs text-accent-dark font-medium hover:underline">
+                          Xem video TikTok →
+                        </a>
+                      )}
+                    </div>
                   </div>
+
+                  {/* Full script content */}
+                  {vid.script && (
+                    <div className="border-t border-border bg-bg-surface-2/40 p-3 space-y-2">
+                      {vid.script.caption && (
+                        <p className="text-xs text-text-primary whitespace-pre-wrap leading-relaxed">
+                          {vid.script.caption}
+                        </p>
+                      )}
+                      {hashtags.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {hashtags.slice(0, 8).map((h, i) => (
+                            <span key={i} className="text-[10px] text-accent-dark">#{h}</span>
+                          ))}
+                        </div>
+                      )}
+                      {scenes.length > 0 && (
+                        <details className="text-xs">
+                          <summary className="cursor-pointer text-text-muted font-medium hover:text-accent-dark">
+                            Xem chi tiết script ({scenes.length} scenes)
+                          </summary>
+                          <div className="mt-2 space-y-1.5">
+                            {scenes.map((sc, i) => (
+                              <div key={i} className="border-l-2 border-accent/30 pl-2">
+                                <p className="text-[10px] font-bold text-accent-dark">
+                                  {sc.label || `Scene ${i + 1}`}{sc.timestamp ? ` · ${sc.timestamp}` : ""}
+                                </p>
+                                {sc.text_on_screen && <p className="text-[11px] text-text-primary">📱 {sc.text_on_screen}</p>}
+                                {sc.voiceover && <p className="text-[11px] text-text-muted italic">🎙️ "{sc.voiceover}"</p>}
+                              </div>
+                            ))}
+                          </div>
+                        </details>
+                      )}
+                    </div>
+                  )}
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
