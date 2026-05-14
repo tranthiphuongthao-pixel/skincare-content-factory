@@ -82,7 +82,7 @@ function AddProductModal({ brands: rawBrands, onClose, onAdded }) {
     if (!form.name || !form.category) { setError("Điền tên và danh mục sản phẩm"); return; }
     setLoading(true);
     try {
-      const res = await api.post("/products", form);
+      const res = await api.post("/products/", form);
       onAdded(res.data);
     } catch (err) {
       setError(err.response?.data?.detail || "Thêm sản phẩm thất bại");
@@ -285,7 +285,7 @@ export default function MyProducts() {
   useEffect(() => {
     Promise.all([
       api.get("/products/my").catch(() => ({ data: { items: [] } })),
-      api.get("/brands").catch(() => ({ data: [] })),
+      api.get("/brands/").catch(() => ({ data: [] })),
     ]).then(([prodRes, brandRes]) => {
       const prodItems = Array.isArray(prodRes.data)
         ? prodRes.data
