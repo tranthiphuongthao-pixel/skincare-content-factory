@@ -28,8 +28,11 @@ export default function ContentCalendar() {
       const res = await api.get("/calendar/", {
         params: { month: currentDate.getMonth() + 1, year: currentDate.getFullYear() }
       });
-      setEntries(res.data);
-    } finally { setLoading(false); }
+      const items = Array.isArray(res.data)
+        ? res.data
+        : Array.isArray(res.data?.items) ? res.data.items : [];
+      setEntries(items);
+    } catch { setEntries([]); } finally { setLoading(false); }
   };
 
   const prevMonth = () => setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() - 1, 1));
