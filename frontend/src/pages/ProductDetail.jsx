@@ -89,8 +89,14 @@ export default function ProductDetail() {
         ]);
       })
       .then(([revRes, vidRes]) => {
-        setReviews(revRes.data || []);
-        setVideos(vidRes.data?.items || vidRes.data || []);
+        const revs = Array.isArray(revRes.data)
+          ? revRes.data
+          : Array.isArray(revRes.data?.items) ? revRes.data.items : [];
+        const vids = Array.isArray(vidRes.data?.items)
+          ? vidRes.data.items
+          : Array.isArray(vidRes.data) ? vidRes.data : [];
+        setReviews(revs);
+        setVideos(vids);
       })
       .catch(() => setError("Không tìm thấy sản phẩm"))
       .finally(() => setLoading(false));
