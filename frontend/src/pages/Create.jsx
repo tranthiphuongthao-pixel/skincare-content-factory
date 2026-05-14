@@ -619,7 +619,7 @@ export default function Create() {
     if (!q.trim()) { setProductResults([]); return; }
     setSearchLoading(true);
     try {
-      const res = await api.get("/products", { params: { search: q, limit: 10 } });
+      const res = await api.get("/products/", { params: { search: q, limit: 10 } });
       const items = Array.isArray(res.data?.items) ? res.data.items : Array.isArray(res.data) ? res.data : [];
       setProductResults(items);
     } catch {
@@ -662,7 +662,7 @@ export default function Create() {
     if (!selectedOption || !selectedProduct) return;
     setActionLoading("video");
     try {
-      await api.post("/videos", {
+      await api.post("/videos/", {
         product_id: selectedProduct.id,
         script_id: selectedOption.script_id,
         title: `${selectedProduct.name} - ${selectedTopics[0] || "review"}`,
