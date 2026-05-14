@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -16,15 +16,17 @@ os.makedirs("/app/uploads/products", exist_ok=True)
 def _seed_database():
     db = SessionLocal()
     try:
+        # Backfill any rows missing created_at so Pydantic response models don't 500
+        db.execute(text("UPDATE brands SET created_at = NOW() WHERE created_at IS NULL"))
         if db.execute(text("SELECT COUNT(*) FROM brands")).scalar() == 0:
             db.execute(text("""
-                INSERT INTO brands (name, slug, description, country_of_origin) VALUES
-                  ('Some By Mi',     'some-by-mi',     'K-beauty brand nổi tiếng với AHA BHA PHA', 'Hàn Quốc'),
-                  ('Laneige',        'laneige',        'Premium K-beauty hydration specialist',     'Hàn Quốc'),
-                  ('The Ordinary',   'the-ordinary',   'Affordable clinical formulations',          'Canada'),
-                  ('Innisfree',      'innisfree',      'Natural beauty from Jeju Island',           'Hàn Quốc'),
-                  ('Klairs',         'klairs',         'Gentle skincare for sensitive skin',        'Hàn Quốc'),
-                  ('Paula''s Choice','paulas-choice',  'Research-backed skincare',                  'USA')
+                INSERT INTO brands (name, slug, description, country_of_origin, created_at) VALUES
+                  ('Some By Mi',     'some-by-mi',     'K-beauty brand nổi tiếng với AHA BHA PHA', 'Hàn Quốc', NOW()),
+                  ('Laneige',        'laneige',        'Premium K-beauty hydration specialist',     'Hàn Quốc', NOW()),
+                  ('The Ordinary',   'the-ordinary',   'Affordable clinical formulations',          'Canada',   NOW()),
+                  ('Innisfree',      'innisfree',      'Natural beauty from Jeju Island',           'Hàn Quốc', NOW()),
+                  ('Klairs',         'klairs',         'Gentle skincare for sensitive skin',        'Hàn Quốc', NOW()),
+                  ('Paula''s Choice','paulas-choice',  'Research-backed skincare',                  'USA',      NOW())
                 ON CONFLICT (slug) DO NOTHING
             """))
         if db.execute(text("SELECT COUNT(*) FROM topic_templates")).scalar() == 0:
@@ -86,6 +88,10 @@ _STATIC = Path("/app/static")
 
 @app.get("/{full_path:path}")
 async def serve_spa(full_path: str):
+    # API paths must NEVER be served the SPA fallback — return proper 404 so
+    # frontend gets a JSON error instead of HTML (which would crash .map calls).
+    if full_path == "api" or full_path.startswith("api/"):
+        raise HTTPException(status_code=404, detail="API endpoint not found")
     candidate = _STATIC / full_path
     if candidate.is_file():
         return FileResponse(candidate)
