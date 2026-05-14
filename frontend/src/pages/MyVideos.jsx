@@ -209,7 +209,7 @@ export default function MyVideos() {
 
   useEffect(() => {
     api.get("/videos/my")
-      .then(res => setVideos(res.data || []))
+      .then(res => setVideos(res.data?.items || (Array.isArray(res.data) ? res.data : [])))
       .catch(() => setVideos([]))
       .finally(() => setLoading(false));
   }, []);
