@@ -38,7 +38,7 @@ export default function ProductLibrary() {
   const fetchProducts = async () => {
     try {
       const res = await api.get("/products/");
-      setProducts(res.data);
+      setProducts(res.data?.items || (Array.isArray(res.data) ? res.data : []));
     } finally { setLoading(false); }
   };
 
