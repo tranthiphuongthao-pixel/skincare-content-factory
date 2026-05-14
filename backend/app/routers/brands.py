@@ -36,11 +36,11 @@ class BrandResponse(BaseModel):
     id: int
     name: str
     slug: str
-    description: Optional[str]
-    logo_url: Optional[str]
-    website_url: Optional[str]
-    country_of_origin: Optional[str]
-    created_at: datetime
+    description: Optional[str] = None
+    logo_url: Optional[str] = None
+    website_url: Optional[str] = None
+    country_of_origin: Optional[str] = None
+    created_at: Optional[datetime] = None
     product_count: int = 0
 
     class Config:
@@ -52,9 +52,9 @@ class ProductBasicForBrand(BaseModel):
     name: str
     slug: str
     category: str
-    image_url: Optional[str]
-    price_range: Optional[str]
-    is_verified: bool
+    image_url: Optional[str] = None
+    price_range: Optional[str] = None
+    is_verified: bool = False
 
     class Config:
         from_attributes = True
@@ -64,13 +64,13 @@ class BrandDetailResponse(BaseModel):
     id: int
     name: str
     slug: str
-    description: Optional[str]
-    logo_url: Optional[str]
-    website_url: Optional[str]
-    country_of_origin: Optional[str]
-    created_at: datetime
-    product_count: int
-    products: List[ProductBasicForBrand]
+    description: Optional[str] = None
+    logo_url: Optional[str] = None
+    website_url: Optional[str] = None
+    country_of_origin: Optional[str] = None
+    created_at: Optional[datetime] = None
+    product_count: int = 0
+    products: List[ProductBasicForBrand] = []
 
     class Config:
         from_attributes = True
