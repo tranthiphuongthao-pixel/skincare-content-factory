@@ -16,7 +16,7 @@ const POLICY_BADGE = {
   violation: { label: "🔴 Vi phạm", cls: "bg-red-500/10 text-red-500 border-red-200" },
 };
 
-const TABS = ["Tất cả", "Draft", "Ready", "Posted", "Public"];
+const TABS = ["Tất cả", "Draft", "Ready", "Public"];
 const SKIN_TYPES = ["Oily", "Dry", "Combination", "Sensitive", "Normal"];
 const STORES = ["Hasaki", "Shopee", "Guardian", "Beauty Box", "Lazada", "Khác"];
 
@@ -309,7 +309,9 @@ export default function MyVideos() {
   const filtered = videos.filter(v => {
     if (activeTab === "Tất cả") return true;
     if (activeTab === "Public") return v.is_public;
-    return v.status?.toLowerCase() === activeTab.toLowerCase();
+    if (activeTab === "Draft") return !v.is_public && v.status === "draft";
+    if (activeTab === "Ready") return !v.is_public && v.status === "ready";
+    return false;
   });
 
   const handleCheckPolicy = async (videoId) => {
