@@ -13,13 +13,13 @@ export default function Analytics() {
 
   useEffect(() => {
     Promise.all([
-      api.get("/analytics/summary"),
-      api.get("/analytics/"),
-      api.get("/scripts/?status=posted"),
+      api.get("/analytics/summary").catch(() => ({ data: null })),
+      api.get("/analytics/").catch(() => ({ data: [] })),
+      api.get("/scripts/?status=posted").catch(() => ({ data: [] })),
     ]).then(([sum, ana, scr]) => {
       setSummary(sum.data);
-      setAnalytics(ana.data);
-      setScripts(scr.data);
+      setAnalytics(Array.isArray(ana.data) ? ana.data : []);
+      setScripts(Array.isArray(scr.data) ? scr.data : []);
     }).finally(() => setLoading(false));
   }, []);
 
@@ -37,7 +37,7 @@ export default function Analytics() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Analytics</h1>
-          <p className="text-text-secondary text-sm mt-1">Performance tracking</p>
+          <p className="text-text-muted text-sm mt-1">Performance tracking</p>
         </div>
         <button onClick={() => setShowForm(true)} className="btn-primary">
           <Plus size={16} /> Nhập dữ liệu
@@ -65,7 +65,7 @@ export default function Analytics() {
             {[1,2,3].map(i => <div key={i} className="h-14 bg-surface rounded-xl animate-pulse" />)}
           </div>
         ) : analytics.length === 0 ? (
-          <div className="text-center py-8 text-text-secondary">
+          <div className="text-center py-8 text-text-muted">
             <TrendingUp className="w-10 h-10 mx-auto mb-2 opacity-40" />
             <p>Chưa có dữ liệu analytics</p>
           </div>
@@ -73,7 +73,7 @@ export default function Analytics() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-text-secondary border-b border-border">
+                <tr className="text-text-muted border-b border-border">
                   <th className="text-left pb-3">Script ID</th>
                   <th className="text-right pb-3">Views</th>
                   <th className="text-right pb-3">Likes</th>
@@ -107,7 +107,7 @@ export default function Analytics() {
             <h2 className="text-xl font-bold mb-5">Nhập dữ liệu analytics</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="text-sm text-text-secondary mb-1 block">Script</label>
+                <label className="text-sm text-text-muted mb-1 block">Script</label>
                 <select value={form.script_id} onChange={e => setForm({...form, script_id: e.target.value})} className="input" required>
                   <option value="">Chọn script...</option>
                   {scripts.map(s => <option key={s.id} value={s.id}>#{s.id} — {s.hook?.slice(0, 40)}</option>)}
@@ -116,7 +116,7 @@ export default function Analytics() {
               <div className="grid grid-cols-2 gap-3">
                 {["views", "likes", "comments", "shares", "saves", "follower_gain"].map(field => (
                   <div key={field}>
-                    <label className="text-sm text-text-secondary mb-1 block capitalize">{field.replace("_", " ")}</label>
+                    <label className="text-sm text-text-muted mb-1 block capitalize">{field.replace("_", " ")}</label>
                     <input type="number" min="0" value={form[field]} onChange={e => setForm({...form, [field]: parseInt(e.target.value) || 0})} className="input" />
                   </div>
                 ))}
