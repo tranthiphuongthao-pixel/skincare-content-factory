@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Search, Star, Sparkles, ChevronRight } from "lucide-react";
 import api from "../api/client";
 import { useAuth } from "../context/AuthContext";
+import SafeImage from "../components/SafeImage";
 
 const CATEGORIES = ["Tất cả", "Serum", "Moisturizer", "Cleanser", "Toner", "Sunscreen", "Mask", "Khác"];
 
@@ -40,13 +41,12 @@ function ProductCard({ product }) {
   const rating = product.avg_overall_rating;
   return (
     <div className="bg-white border border-border rounded-[20px] overflow-hidden hover:border-accent/50 hover:shadow-[0_8px_24px_rgba(212,160,192,0.12)] transition-all flex flex-col shrink-0 w-56">
-      {product.image_url ? (
-        <img src={product.image_url} alt={product.name} className="w-full h-36 object-cover" />
-      ) : (
-        <div className="w-full h-36 bg-gradient-to-br from-accent/20 to-accent-dark/10 flex items-center justify-center text-4xl">
-          ✨
-        </div>
-      )}
+      <SafeImage
+        src={product.image_url}
+        alt={product.name}
+        className="w-full h-36 object-cover bg-gradient-to-br from-accent/20 to-accent-dark/10"
+        fallback={<span className="text-4xl">✨</span>}
+      />
       <div className="p-4 flex flex-col flex-1 gap-2">
         <div>
           <h3 className="font-semibold text-sm text-text-primary leading-tight line-clamp-2">{product.name}</h3>
