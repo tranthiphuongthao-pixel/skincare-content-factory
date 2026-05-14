@@ -207,11 +207,15 @@ Trả về JSON CHÍNH XÁC:
   "safe_hashtags": ["hashtag1", "hashtag2", ...]
 }}"""
 
-        response = self.model.generate_content(prompt)
-        result = self._parse_json_response(response.text)
-        if "is_safe" not in result:
+        try:
+            response = self.model.generate_content(prompt)
+            result = self._parse_json_response(response.text)
+            if "is_safe" not in result:
+                return self._mock_policy_check()
+            return result
+        except (google_exceptions.NotFound, google_exceptions.InvalidArgument, google_exceptions.PermissionDenied, Exception) as exc:
+            print(f"Gemini check_policy failed, falling back to mock: {exc}")
             return self._mock_policy_check()
-        return result
 
     def _mock_policy_check(self):
         return {
@@ -247,8 +251,18 @@ Format JSON:
   "tips": "lời khuyên để viết hook tốt hơn"
 }}"""
 
-        response = self.model.generate_content(prompt)
-        return self._parse_json_response(response.text)
+        try:
+            response = self.model.generate_content(prompt)
+            return self._parse_json_response(response.text)
+        except Exception as exc:
+            print(f"Gemini improve_hook failed, falling back: {exc}")
+            return {
+                "alternatives": [
+                    f"Bạn có biết {product_name} đang được 1 triệu người dùng?",
+                    f"Tôi đã tiêu hết tiền vì {product_name}...",
+                    f"Da mặt tôi thay đổi sau 7 ngày dùng {product_name}",
+                ]
+            }
 
     async def generate_hashtags(self, product, topic_type: str) -> dict:
         brand_name = ""
@@ -287,8 +301,19 @@ Format JSON:
   "product_specific": ["tag1", ...]
 }}"""
 
-        response = self.model.generate_content(prompt)
-        return self._parse_json_response(response.text)
+        try:
+            response = self.model.generate_content(prompt)
+            return self._parse_json_response(response.text)
+        except Exception as exc:
+            print(f"Gemini generate_hashtags failed, falling back: {exc}")
+            return {
+                "hashtags": [
+                    "skincare", "skincarevietnamese", "skincaretips", "review",
+                    product.name.lower().replace(" ", ""),
+                    brand_name.lower().replace(" ", "") if brand_name else "skincare",
+                    "chamsocda", "damat", "reviewmypham",
+                ]
+            }
 
     async def generate_monthly_calendar(self, products: list, month: int, year: int) -> dict:
         if not self.model:
@@ -328,9 +353,12 @@ Format JSON:
   ]
 }}"""
 
-        response = self.model.generate_content(prompt)
-        result = self._parse_json_response(response.text)
-        return result
+        try:
+            response = self.model.generate_content(prompt)
+            return self._parse_json_response(response.text)
+        except Exception as exc:
+            print(f"Gemini generate_monthly_calendar failed, falling back: {exc}")
+            return self._mock_calendar(products, month, year)
 
     async def analyze_best_content(self, analytics_data: list) -> dict:
         if not self.model or not analytics_data:
@@ -359,8 +387,15 @@ Format JSON:
   "next_content_direction": "định hướng content tiếp theo"
 }}"""
 
-        response = self.model.generate_content(prompt)
-        return self._parse_json_response(response.text)
+        try:
+            response = self.model.generate_content(prompt)
+            return self._parse_json_response(response.text)
+        except Exception as exc:
+            print(f"Gemini analyze_best_content failed: {exc}")
+            return {
+                "insights": "Lỗi khi phân tích, vui lòng thử lại",
+                "recommendations": ["Đăng thêm video để có dữ liệu phân tích"],
+            }
 
     def _mock_script(self, product, format_type: str, topic_type: str) -> dict:
         product_name = product.name
