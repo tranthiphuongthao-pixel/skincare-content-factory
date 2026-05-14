@@ -287,8 +287,9 @@ function Step4ScriptDetail({ selectedOption, selectedProduct, policyFor, actionL
   const [copiedCaption, setCopiedCaption] = useState(false);
   const [activeTab, setActiveTab] = useState("script");
 
-  const allVoiceover = selectedOption.scenes
-    ?.filter(s => s.voiceover)
+  const safeScenes = Array.isArray(selectedOption.scenes) ? selectedOption.scenes : [];
+  const allVoiceover = safeScenes
+    .filter(s => s.voiceover)
     .map((s, i) => `[${s.label || `Scene ${i + 1}`}] ${s.voiceover}`)
     .join("\n\n") || "";
 
@@ -397,9 +398,9 @@ function Step4ScriptDetail({ selectedOption, selectedProduct, policyFor, actionL
                 </button>
               )}
 
-              {selectedOption.scenes?.length > 0 && (
+              {safeScenes.length > 0 && (
                 <div className="space-y-2">
-                  {selectedOption.scenes.map((scene, i) => {
+                  {safeScenes.map((scene, i) => {
                     const labelCls = SCENE_LABEL_COLORS[scene.label] || "bg-bg-surface-2 text-text-muted";
                     return (
                       <div key={i} className="border border-border rounded-[14px] bg-white overflow-hidden">
@@ -581,19 +582,24 @@ export default function Create() {
   };
   const clearDraft = () => localStorage.removeItem(CREATE_VIDEO_DRAFT_KEY);
 
+  const sanitizeOption = (opt) => {
+    if (!opt || typeof opt !== "object") return null;
+    return { ...opt, scenes: Array.isArray(opt.scenes) ? opt.scenes : [] };
+  };
+
   useEffect(() => {
     try {
       const draft = JSON.parse(localStorage.getItem(CREATE_VIDEO_DRAFT_KEY));
-      if (draft) {
+      if (draft && typeof draft === "object") {
         setStep(draft.step || 1);
         setSelectedProduct(draft.selectedProduct || null);
-        setSelectedTopics(draft.selectedTopics || []);
-        setOptionA(draft.optionA || null);
-        setOptionB(draft.optionB || null);
-        setSelectedOption(draft.selectedOption || null);
+        setSelectedTopics(Array.isArray(draft.selectedTopics) ? draft.selectedTopics : []);
+        setOptionA(sanitizeOption(draft.optionA));
+        setOptionB(sanitizeOption(draft.optionB));
+        setSelectedOption(sanitizeOption(draft.selectedOption));
         setProductSearch(draft.productSearch || "");
       }
-    } catch { /* ignore */ }
+    } catch { clearDraft(); }
   }, []);
 
   useEffect(() => {
@@ -675,7 +681,7 @@ export default function Create() {
     }
     setSelectedOption({
       hook: script.hook,
-      scenes: script.scenes || [],
+      scenes: Array.isArray(script.scenes) ? script.scenes : [],
       caption: script.caption,
       hashtags: script.hashtags || [],
       music_vibe: script.music_vibe,
@@ -912,7 +918,7 @@ export default function Create() {
                             )}
                             <div className="flex gap-2 w-full">
                               <button
-                                onClick={() => { setSelectedOption(option); setStep(4); }}
+                                onClick={() => { setSelectedOption({ ...option, _format_type: format, scenes: Array.isArray(option.scenes) ? option.scenes : [] }); setStep(4); }}
                                 className="btn-primary flex-1 justify-center text-sm py-2"
                               >
                                 Chọn option này
