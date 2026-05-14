@@ -81,11 +81,24 @@ function AddProductModal({ brands: rawBrands, onClose, onAdded }) {
     e.preventDefault();
     if (!form.name || !form.category) { setError("Điền tên và danh mục sản phẩm"); return; }
     setLoading(true);
+    // Strip empty strings so FastAPI Optional[int] / Optional[str] fields don't 422
+    const payload = {
+      name: form.name,
+      category: form.category,
+      key_ingredients: Array.isArray(form.key_ingredients) ? form.key_ingredients : [],
+      skin_concerns: Array.isArray(form.skin_concerns) ? form.skin_concerns : [],
+      suitable_skin_types: Array.isArray(form.suitable_skin_types) ? form.suitable_skin_types : [],
+    };
+    if (form.brand_id) payload.brand_id = parseInt(form.brand_id, 10);
+    if (form.price_range) payload.price_range = form.price_range;
+    if (form.image_url) payload.image_url = form.image_url;
+    if (form.affiliate_link) payload.affiliate_link = form.affiliate_link;
     try {
-      const res = await api.post("/products/", form);
+      const res = await api.post("/products/", payload);
       onAdded(res.data);
     } catch (err) {
-      setError(err.response?.data?.detail || "Thêm sản phẩm thất bại");
+      const msg = err.response?.data?.detail;
+      setError(typeof msg === "string" ? msg : "Thêm sản phẩm thất bại");
     } finally {
       setLoading(false);
     }
