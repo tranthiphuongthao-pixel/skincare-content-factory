@@ -282,12 +282,15 @@ function ScriptsList({ onCreateNew, onSelectScript }) {
 }
 
 // ─── Step 4: Script detail ─────────────────────────────────────────────────
-function Step4ScriptDetail({ selectedOption, selectedProduct, policyFor, actionLoading, actionMsg, onBack, onCreateVideo, onImproveHook }) {
+function Step4ScriptDetail({ selectedOption: rawSelectedOption, selectedProduct, policyFor, actionLoading, actionMsg, onBack, onCreateVideo, onImproveHook }) {
   const [copiedVoiceover, setCopiedVoiceover] = useState(false);
   const [copiedCaption, setCopiedCaption] = useState(false);
   const [activeTab, setActiveTab] = useState("script");
 
+  const selectedOption = rawSelectedOption && typeof rawSelectedOption === "object" && !Array.isArray(rawSelectedOption) ? rawSelectedOption : {};
   const safeScenes = Array.isArray(selectedOption.scenes) ? selectedOption.scenes : [];
+  const safeHashtags = Array.isArray(selectedOption.hashtags) ? selectedOption.hashtags : [];
+  const safePropsNeeded = Array.isArray(selectedOption.props_needed) ? selectedOption.props_needed : [];
   const allVoiceover = safeScenes
     .filter(s => s.voiceover)
     .map((s, i) => `[${s.label || `Scene ${i + 1}`}] ${s.voiceover}`)
@@ -301,8 +304,7 @@ function Step4ScriptDetail({ selectedOption, selectedProduct, policyFor, actionL
   };
 
   const copyCaption = () => {
-    const tags = Array.isArray(selectedOption.hashtags) ? selectedOption.hashtags : [];
-    const text = `${selectedOption.caption || ""}\n\n${tags.map(t => `#${t}`).join(" ")}`;
+    const text = `${selectedOption.caption || ""}\n\n${safeHashtags.map(t => `#${t}`).join(" ")}`;
     navigator.clipboard.writeText(text);
     setCopiedCaption(true);
     setTimeout(() => setCopiedCaption(false), 2000);
@@ -445,13 +447,13 @@ function Step4ScriptDetail({ selectedOption, selectedProduct, policyFor, actionL
                 </div>
               )}
 
-              {Array.isArray(selectedOption.props_needed) && selectedOption.props_needed.length > 0 && (
+              {safePropsNeeded.length > 0 && (
                 <div className="bg-amber-50 border border-amber-100 rounded-[14px] p-4">
                   <p className="text-xs font-semibold text-amber-700 mb-2 flex items-center gap-1.5">
                     <Package size={12} /> Props cần chuẩn bị
                   </p>
                   <ul className="space-y-1">
-                    {selectedOption.props_needed.map((prop, i) => (
+                    {safePropsNeeded.map((prop, i) => (
                       <li key={i} className="flex items-center gap-2 text-xs text-amber-800">
                         <span className="w-4 h-4 rounded border border-amber-300 flex items-center justify-center shrink-0 bg-white">
                           <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
@@ -485,11 +487,11 @@ function Step4ScriptDetail({ selectedOption, selectedProduct, policyFor, actionL
                   </div>
                 </div>
               )}
-              {Array.isArray(selectedOption.hashtags) && selectedOption.hashtags.length > 0 && (
+              {safeHashtags.length > 0 && (
                 <div>
                   <p className="text-xs uppercase tracking-[0.2em] text-text-muted font-medium mb-2">Hashtags</p>
                   <div className="flex flex-wrap gap-1.5 mb-3">
-                    {selectedOption.hashtags.map((tag, i) => (
+                    {safeHashtags.map((tag, i) => (
                       <span key={i} className="badge bg-accent/10 text-accent-dark text-xs">#{tag}</span>
                     ))}
                   </div>
