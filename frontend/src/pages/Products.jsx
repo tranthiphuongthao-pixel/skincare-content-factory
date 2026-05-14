@@ -85,7 +85,7 @@ export default function Products() {
     const params = { limit: 100 };
     if (searchVal) params.search = searchVal;
     if (categoryVal && categoryVal !== "Tất cả") params.category = categoryVal;
-    api.get("/products", { params })
+    api.get("/products/", { params })
       .then(res => {
         const items = Array.isArray(res.data?.items)
           ? res.data.items
@@ -97,7 +97,7 @@ export default function Products() {
   };
 
   useEffect(() => {
-    api.get("/brands")
+    api.get("/brands/")
       .then(res => setBrands(Array.isArray(res.data) ? res.data : Array.isArray(res.data?.items) ? res.data.items : []))
       .catch(() => setBrands([]));
     fetchProducts("", "Tất cả");
