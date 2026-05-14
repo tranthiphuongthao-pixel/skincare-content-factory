@@ -18,6 +18,10 @@ def _seed_database():
     try:
         # Backfill any rows missing created_at so Pydantic response models don't 500
         db.execute(text("UPDATE brands SET created_at = NOW() WHERE created_at IS NULL"))
+        # Clear broken local-upload image URLs left over from ephemeral filesystem.
+        # New uploads are stored as base64 data URLs and persist with the DB.
+        db.execute(text("UPDATE products SET image_url = NULL WHERE image_url LIKE '/uploads/%'"))
+        db.execute(text("UPDATE brands   SET logo_url  = NULL WHERE logo_url  LIKE '/uploads/%'"))
         if db.execute(text("SELECT COUNT(*) FROM brands")).scalar() == 0:
             db.execute(text("""
                 INSERT INTO brands (name, slug, description, country_of_origin, created_at) VALUES
