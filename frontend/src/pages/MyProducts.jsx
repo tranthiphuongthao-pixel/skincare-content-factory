@@ -34,6 +34,7 @@ function AddProductModal({ brands: rawBrands, onClose, onAdded }) {
     key_ingredients: [],
     skin_concerns: [],
     suitable_skin_types: [],
+    personal_notes: "",
     image_url: "",
     affiliate_link: "",
   });
@@ -81,6 +82,12 @@ function AddProductModal({ brands: rawBrands, onClose, onAdded }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.name || !form.category) { setError("Điền tên và danh mục sản phẩm"); return; }
+    if (form.skin_concerns.length === 0) { setError("Chọn ít nhất 1 vấn đề da để giải quyết"); return; }
+    const trimmedNotes = form.personal_notes.trim();
+    if (trimmedNotes.length < 30) {
+      setError(`Ghi chú cá nhân cần ít nhất 30 ký tự (hiện ${trimmedNotes.length}). Mô tả trải nghiệm thật để script độc đáo.`);
+      return;
+    }
     setLoading(true);
     // Strip empty strings so FastAPI Optional[int] / Optional[str] fields don't 422
     const payload = {
@@ -89,6 +96,7 @@ function AddProductModal({ brands: rawBrands, onClose, onAdded }) {
       key_ingredients: Array.isArray(form.key_ingredients) ? form.key_ingredients : [],
       skin_concerns: Array.isArray(form.skin_concerns) ? form.skin_concerns : [],
       suitable_skin_types: Array.isArray(form.suitable_skin_types) ? form.suitable_skin_types : [],
+      personal_notes: trimmedNotes,
     };
     if (form.brand_id) payload.brand_id = parseInt(form.brand_id, 10);
     if (form.price_range) payload.price_range = form.price_range;
@@ -187,7 +195,7 @@ function AddProductModal({ brands: rawBrands, onClose, onAdded }) {
           </div>
 
           <div>
-            <label className="text-sm text-text-muted font-medium mb-1.5 block">Vấn đề da giải quyết</label>
+            <label className="text-sm text-text-muted font-medium mb-1.5 block">Vấn đề da giải quyết * <span className="text-text-muted/70 font-normal">(chọn ít nhất 1)</span></label>
             <div className="flex flex-wrap gap-1.5">
               {SKIN_CONCERNS.map(c => (
                 <button
@@ -213,6 +221,25 @@ function AddProductModal({ brands: rawBrands, onClose, onAdded }) {
                   {t}
                 </button>
               ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="text-sm text-text-muted font-medium mb-1.5 block">
+              Trải nghiệm cá nhân * <span className="text-text-muted/70 font-normal">(tối thiểu 30 ký tự — giúp AI tạo script độc đáo, không trùng người khác)</span>
+            </label>
+            <div className="relative">
+              <textarea
+                className="input resize-none h-24 focus:border-accent"
+                value={form.personal_notes}
+                onChange={e => set("personal_notes", e.target.value.slice(0, 500))}
+                placeholder="VD: Da dầu mụn của mình, dùng 3 tuần thấy mụn ẩn giảm rõ, texture mềm không bí da. Hợp dùng buổi tối, sáng hơi bóng dầu."
+                maxLength={500}
+                required
+              />
+              <span className={`absolute bottom-2 right-3 text-xs ${form.personal_notes.trim().length < 30 ? "text-red-400" : "text-emerald-500"}`}>
+                {form.personal_notes.trim().length}/30+
+              </span>
             </div>
           </div>
 
