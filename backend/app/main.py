@@ -3,7 +3,7 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from sqlalchemy import text
 from app.models.database import Base, engine, SessionLocal
 from app.routers import auth, brands, products, reviews, videos, scripts, calendar, analytics, generator, admin, dashboard
@@ -82,15 +82,21 @@ def health():
     return {"status": "ok"}
 
 
-# SPA catch-all — serves React app for all non-API routes
+# SPA catch-all — serves React app for all non-API, non-static paths.
+# GET-only: POST/PUT/DELETE to /api/* without trailing slash falls through to
+# FastAPI's redirect_slashes (which 307-redirects to /api/*/).
 _STATIC = Path("/app/static")
 
 
 @app.get("/{full_path:path}")
 async def serve_spa(full_path: str):
-    # API paths must NEVER be served the SPA fallback — return proper 404 so
-    # frontend gets a JSON error instead of HTML (which would crash .map calls).
+    # API paths must NEVER be served the SPA fallback. For /api/X (no trailing
+    # slash), redirect to /api/X/ so the router's "/" routes can handle it.
+    # This is the GET equivalent of FastAPI's redirect_slashes (which only
+    # fires when no route matches — but this catch-all always matches).
     if full_path == "api" or full_path.startswith("api/"):
+        if not full_path.endswith("/"):
+            return RedirectResponse(url=f"/{full_path}/", status_code=307)
         raise HTTPException(status_code=404, detail="API endpoint not found")
     candidate = _STATIC / full_path
     if candidate.is_file():
