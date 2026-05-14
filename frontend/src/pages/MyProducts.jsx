@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Plus, X, Wand2, ImagePlus } from "lucide-react";
 import api from "../api/client";
+import SafeImage from "../components/SafeImage";
 
 const CATEGORIES = [
   { value: "serum", label: "Serum" },
@@ -375,13 +376,12 @@ export default function MyProducts() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {products.map(product => (
               <div key={product.id} className="bg-white border border-border rounded-[20px] overflow-hidden hover:border-accent/40 hover:shadow-[0_8px_24px_rgba(160,96,128,0.08)] transition-all flex flex-col">
-                {product.image_url ? (
-                  <img src={product.image_url} alt={product.name} className="w-full h-36 object-cover" />
-                ) : (
-                  <div className="w-full h-36 bg-gradient-to-br from-accent/20 to-accent-dark/10 flex items-center justify-center text-4xl">
-                    ✨
-                  </div>
-                )}
+                <SafeImage
+                  src={product.image_url}
+                  alt={product.name}
+                  className="w-full h-36 object-cover bg-gradient-to-br from-accent/20 to-accent-dark/10"
+                  fallback={<span className="text-4xl">✨</span>}
+                />
                 <div className="p-4 flex flex-col flex-1 gap-2">
                   <div>
                     <h3 className="text-sm font-semibold text-text-primary leading-tight line-clamp-2">{product.name}</h3>
