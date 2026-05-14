@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import ErrorBoundary from "./components/ErrorBoundary";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -9,6 +10,7 @@ import ProductDetail from "./pages/ProductDetail";
 import Create from "./pages/Create";
 import MyVideos from "./pages/MyVideos";
 import MyProducts from "./pages/MyProducts";
+import MyScripts from "./pages/MyScripts";
 import ContentCalendar from "./pages/ContentCalendar";
 import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
@@ -65,32 +67,35 @@ function HomeRoute() {
 export default function App() {
   return (
     <AuthProvider>
-      <Routes>
-        {/* Public routes */}
-        <Route path="/" element={<HomeRoute />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/products" element={<Products />} />
-        <Route path="/products/:slug" element={<ProductDetail />} />
-        <Route path="/products/brands/:slug" element={<Navigate to="/products" replace />} />
+      <ErrorBoundary>
+        <Routes>
+          {/* Public routes */}
+          <Route path="/" element={<HomeRoute />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/products" element={<Products />} />
+          <Route path="/products/:slug" element={<ProductDetail />} />
+          <Route path="/products/brands/:slug" element={<Navigate to="/products" replace />} />
 
-        {/* Auth routes */}
-        <Route path="/dashboard" element={<PrivateLayout><Dashboard /></PrivateLayout>} />
-        <Route path="/create" element={<PrivateLayout><Create /></PrivateLayout>} />
-        <Route path="/my/videos" element={<PrivateLayout><MyVideos /></PrivateLayout>} />
-        <Route path="/my/products" element={<PrivateLayout><MyProducts /></PrivateLayout>} />
-        <Route path="/calendar" element={<PrivateLayout><ContentCalendar /></PrivateLayout>} />
-        <Route path="/analytics" element={<PrivateLayout><Analytics /></PrivateLayout>} />
-        <Route path="/settings" element={<PrivateLayout><Settings /></PrivateLayout>} />
+          {/* Auth routes */}
+          <Route path="/dashboard" element={<PrivateLayout><ErrorBoundary><Dashboard /></ErrorBoundary></PrivateLayout>} />
+          <Route path="/create" element={<PrivateLayout><ErrorBoundary><Create /></ErrorBoundary></PrivateLayout>} />
+          <Route path="/my/videos" element={<PrivateLayout><ErrorBoundary><MyVideos /></ErrorBoundary></PrivateLayout>} />
+          <Route path="/my/products" element={<PrivateLayout><ErrorBoundary><MyProducts /></ErrorBoundary></PrivateLayout>} />
+          <Route path="/my/scripts" element={<PrivateLayout><ErrorBoundary><MyScripts /></ErrorBoundary></PrivateLayout>} />
+          <Route path="/calendar" element={<PrivateLayout><ErrorBoundary><ContentCalendar /></ErrorBoundary></PrivateLayout>} />
+          <Route path="/analytics" element={<PrivateLayout><ErrorBoundary><Analytics /></ErrorBoundary></PrivateLayout>} />
+          <Route path="/settings" element={<PrivateLayout><ErrorBoundary><Settings /></ErrorBoundary></PrivateLayout>} />
 
-        {/* Admin routes */}
-        <Route path="/admin" element={<AdminLayout><AdminDashboard /></AdminLayout>} />
-        <Route path="/admin/users" element={<AdminLayout><AdminUsers /></AdminLayout>} />
-        <Route path="/admin/content" element={<AdminLayout><AdminContent /></AdminLayout>} />
-        <Route path="/admin/products" element={<AdminLayout><AdminProducts /></AdminLayout>} />
+          {/* Admin routes */}
+          <Route path="/admin" element={<AdminLayout><ErrorBoundary><AdminDashboard /></ErrorBoundary></AdminLayout>} />
+          <Route path="/admin/users" element={<AdminLayout><ErrorBoundary><AdminUsers /></ErrorBoundary></AdminLayout>} />
+          <Route path="/admin/content" element={<AdminLayout><ErrorBoundary><AdminContent /></ErrorBoundary></AdminLayout>} />
+          <Route path="/admin/products" element={<AdminLayout><ErrorBoundary><AdminProducts /></ErrorBoundary></AdminLayout>} />
 
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </ErrorBoundary>
     </AuthProvider>
   );
 }
