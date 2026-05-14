@@ -376,6 +376,32 @@ def publish_video(
     return _video_to_response(video, db)
 
 
+@router.put("/{video_id}/unpublish", response_model=VideoResponse)
+def unpublish_video(
+    video_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    video = db.query(Video).filter(Video.id == video_id).first()
+    if not video:
+        raise HTTPException(status_code=404, detail="Video not found")
+    if video.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    video.is_public = False
+    video.status = "ready"  # revert to ready so user can edit/republish
+    video.updated_at = datetime.utcnow()
+
+    # Hide the associated review from community too
+    review = db.query(ProductReview).filter(ProductReview.video_id == video_id).first()
+    if review:
+        review.is_public = False
+
+    db.commit()
+    db.refresh(video)
+    return _video_to_response(video, db)
+
+
 @router.delete("/{video_id}")
 def delete_video(
     video_id: int,
