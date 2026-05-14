@@ -501,21 +501,12 @@ export default function MyVideos() {
                         </button>
                       )}
 
-                      {video.status === "ready" && (
-                        <button
-                          onClick={() => handleAddVideoUrl(video.id)}
-                          className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-[12px] border border-emerald-200 bg-emerald-50 text-xs font-medium text-emerald-600 hover:bg-emerald-100 transition-all"
-                        >
-                          <Send size={12} /> Đã đăng (thêm link)
-                        </button>
-                      )}
-
-                      {canPublish && !video.is_public && (
+                      {canPublish && (
                         <button
                           onClick={() => setPublishVideo(video)}
                           className="flex-1 btn-primary py-2 text-xs justify-center min-w-[100px]"
                         >
-                          Public lên cộng đồng
+                          <Send size={12} /> Public lên cộng đồng
                         </button>
                       )}
 
