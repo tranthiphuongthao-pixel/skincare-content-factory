@@ -361,6 +361,16 @@ export default function MyVideos() {
     }
   };
 
+  const handleUnpublish = async (videoId) => {
+    if (!window.confirm("Gỡ video này khỏi cộng đồng? Video sẽ trở về trạng thái Ready, bạn có thể edit hoặc public lại.")) return;
+    try {
+      const res = await api.put(`/videos/${videoId}/unpublish`);
+      setVideos(vs => vs.map(v => v.id === videoId ? res.data : v));
+    } catch (err) {
+      alert(err.response?.data?.detail || "Unpublish thất bại");
+    }
+  };
+
   return (
     <div className="min-h-screen p-6 md:p-8 bg-bg-primary">
       <div className="max-w-6xl mx-auto">
@@ -509,6 +519,15 @@ export default function MyVideos() {
                           className="flex-1 btn-primary py-2 text-xs justify-center min-w-[100px]"
                         >
                           <Send size={12} /> Public lên cộng đồng
+                        </button>
+                      )}
+
+                      {video.is_public && (
+                        <button
+                          onClick={() => handleUnpublish(video.id)}
+                          className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-[12px] border border-amber-200 bg-amber-50 text-xs font-medium text-amber-700 hover:bg-amber-100 transition-all"
+                        >
+                          Gỡ khỏi cộng đồng
                         </button>
                       )}
 
