@@ -31,7 +31,7 @@ export default function ScriptGenerator() {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    api.get("/products/?status=active").then(r => setProducts(r.data)).catch(() => {});
+    api.get("/products/?status=active").then(r => setProducts(r.data?.items || (Array.isArray(r.data) ? r.data : []))).catch(() => {});
   }, []);
 
   const generate = async () => {
