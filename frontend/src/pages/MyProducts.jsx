@@ -283,7 +283,7 @@ export default function MyProducts() {
 
   useEffect(() => {
     Promise.all([
-      api.get("/my/products").catch(() => ({ data: [] })),
+      api.get("/products/my").catch(() => ({ data: { items: [] } })),
       api.get("/brands").catch(() => ({ data: [] })),
     ]).then(([prodRes, brandRes]) => {
       setProducts(Array.isArray(prodRes.data) ? prodRes.data : prodRes.data?.items || []);
