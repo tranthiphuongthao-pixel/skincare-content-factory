@@ -47,6 +47,21 @@ class ReviewBasicForVideo(BaseModel):
         from_attributes = True
 
 
+class ScriptBasicForVideo(BaseModel):
+    id: int
+    hook: Optional[str] = None
+    scenes: Optional[list] = None
+    caption: Optional[str] = None
+    hashtags: Optional[list] = None
+    voiceover_text: Optional[str] = None
+    music_vibe: Optional[str] = None
+    topic_type: Optional[str] = None
+    format_type: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
 VALID_VIDEO_PROJECT_TYPES = {"A", "B", "C"}
 
 class VideoCreate(BaseModel):
@@ -102,6 +117,7 @@ class VideoResponse(BaseModel):
     tiktok_policy_status: str
     policy_issues: Optional[List]
     review: Optional[ReviewBasicForVideo]
+    script: Optional[ScriptBasicForVideo] = None
     created_at: datetime
 
     class Config:
@@ -165,6 +181,21 @@ def _video_to_response(video: Video, db: Session) -> VideoResponse:
             is_public=r.is_public,
         )
 
+    script_data = None
+    if video.script:
+        s = video.script
+        script_data = ScriptBasicForVideo(
+            id=s.id,
+            hook=s.hook,
+            scenes=s.scenes if isinstance(s.scenes, list) else [],
+            caption=s.caption,
+            hashtags=s.hashtags if isinstance(s.hashtags, list) else [],
+            voiceover_text=s.voiceover_text,
+            music_vibe=s.music_vibe,
+            topic_type=s.topic_type,
+            format_type=s.format_type,
+        )
+
     return VideoResponse(
         id=video.id,
         user=user_data,
@@ -179,6 +210,7 @@ def _video_to_response(video: Video, db: Session) -> VideoResponse:
         tiktok_policy_status=video.tiktok_policy_status,
         policy_issues=video.policy_issues or [],
         review=review_data,
+        script=script_data,
         created_at=video.created_at,
     )
 
