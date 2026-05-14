@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Plus, Shield, X, Star } from "lucide-react";
+import { Plus, Shield, X, Star, Trash2, CheckCircle2, Send, Link2 } from "lucide-react";
 import api from "../api/client";
 
 const STATUS_COLORS = {
@@ -225,16 +225,46 @@ export default function MyVideos() {
     try {
       const res = await api.post(`/videos/${videoId}/check-policy`);
       setPolicyResults(p => ({ ...p, [videoId]: res.data }));
-    } catch {
-      setPolicyResults(p => ({ ...p, [videoId]: { error: true } }));
+    } catch (err) {
+      setPolicyResults(p => ({ ...p, [videoId]: { error: true, message: err.response?.data?.detail || "Lỗi kiểm tra" } }));
     } finally {
       setCheckingPolicy(null);
     }
   };
 
   const handlePublished = (videoId) => {
-    setVideos(vs => vs.map(v => v.id === videoId ? { ...v, is_public: true } : v));
+    setVideos(vs => vs.map(v => v.id === videoId ? { ...v, is_public: true, status: "posted" } : v));
     setPublishVideo(null);
+  };
+
+  const handleStatusChange = async (videoId, newStatus) => {
+    try {
+      const res = await api.put(`/videos/${videoId}`, { status: newStatus });
+      setVideos(vs => vs.map(v => v.id === videoId ? res.data : v));
+    } catch (err) {
+      alert(err.response?.data?.detail || "Cập nhật trạng thái thất bại");
+    }
+  };
+
+  const handleAddVideoUrl = async (videoId) => {
+    const url = prompt("Dán link video TikTok/YouTube của bạn:");
+    if (!url) return;
+    try {
+      const res = await api.put(`/videos/${videoId}`, { video_url: url });
+      setVideos(vs => vs.map(v => v.id === videoId ? res.data : v));
+    } catch (err) {
+      alert(err.response?.data?.detail || "Lưu link thất bại");
+    }
+  };
+
+  const handleDelete = async (videoId) => {
+    if (!window.confirm("Xóa video này?")) return;
+    try {
+      await api.delete(`/videos/${videoId}`);
+      setVideos(vs => vs.filter(v => v.id !== videoId));
+    } catch (err) {
+      alert(err.response?.data?.detail || "Xóa thất bại");
+    }
   };
 
   return (
@@ -285,7 +315,7 @@ export default function MyVideos() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {filtered.map(video => {
-              const policy = POLICY_BADGE[video.policy_status];
+              const policy = POLICY_BADGE[video.tiktok_policy_status || video.policy_status];
               const policyResult = policyResults[video.id];
               const canPublish = ["posted", "ready"].includes(video.status);
 
@@ -328,30 +358,71 @@ export default function MyVideos() {
                     {/* Policy check result */}
                     {policyResult && !policyResult.error && (
                       <div className={`rounded-[12px] p-2.5 text-xs ${policyResult.is_safe ? "bg-emerald-50 text-emerald-700" : "bg-yellow-50 text-yellow-700"}`}>
-                        {policyResult.is_safe ? "✅ Nội dung an toàn" : `⚠️ ${policyResult.issues?.[0] || "Có vấn đề"}`}
+                        {policyResult.is_safe
+                          ? "✅ Nội dung an toàn"
+                          : `⚠️ ${Array.isArray(policyResult.issues) && policyResult.issues[0]?.description ? policyResult.issues[0].description : (policyResult.issues?.[0] || "Có vấn đề")}`}
+                      </div>
+                    )}
+                    {policyResult?.error && (
+                      <div className="rounded-[12px] p-2.5 text-xs bg-red-50 text-red-600">
+                        ⚠️ {policyResult.message || "Lỗi kiểm tra"}
                       </div>
                     )}
 
-                    <div className="flex gap-2">
+                    {/* Video URL if posted */}
+                    {video.video_url && (
+                      <a href={video.video_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs text-accent-dark hover:underline truncate">
+                        <Link2 size={12} /> {video.video_url}
+                      </a>
+                    )}
+
+                    {/* Action buttons — progressive flow based on status */}
+                    <div className="flex flex-wrap gap-2">
                       <button
                         onClick={() => handleCheckPolicy(video.id)}
                         disabled={checkingPolicy === video.id}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-[12px] border border-border text-xs font-medium text-text-muted hover:border-accent/40 hover:text-accent-dark transition-all disabled:opacity-60"
+                        className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-[12px] border border-border text-xs font-medium text-text-muted hover:border-accent/40 hover:text-accent-dark transition-all disabled:opacity-60"
                       >
                         {checkingPolicy === video.id ? (
                           <span className="w-3 h-3 border border-accent border-t-transparent rounded-full animate-spin" />
                         ) : <Shield size={12} />}
-                        Kiểm tra policy
+                        Policy
                       </button>
+
+                      {video.status === "draft" && (
+                        <button
+                          onClick={() => handleStatusChange(video.id, "ready")}
+                          className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-[12px] border border-blue-200 bg-blue-50 text-xs font-medium text-blue-600 hover:bg-blue-100 transition-all"
+                        >
+                          <CheckCircle2 size={12} /> Sẵn sàng
+                        </button>
+                      )}
+
+                      {video.status === "ready" && (
+                        <button
+                          onClick={() => handleAddVideoUrl(video.id)}
+                          className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-[12px] border border-emerald-200 bg-emerald-50 text-xs font-medium text-emerald-600 hover:bg-emerald-100 transition-all"
+                        >
+                          <Send size={12} /> Đã đăng (thêm link)
+                        </button>
+                      )}
 
                       {canPublish && !video.is_public && (
                         <button
                           onClick={() => setPublishVideo(video)}
-                          className="flex-1 btn-primary py-2 text-xs justify-center"
+                          className="flex-1 btn-primary py-2 text-xs justify-center min-w-[100px]"
                         >
-                          Public
+                          Public lên cộng đồng
                         </button>
                       )}
+
+                      <button
+                        onClick={() => handleDelete(video.id)}
+                        className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-[12px] border border-border text-xs font-medium text-red-400 hover:border-red-200 hover:bg-red-50 transition-all"
+                        title="Xóa video"
+                      >
+                        <Trash2 size={12} />
+                      </button>
                     </div>
                   </div>
                 </div>
