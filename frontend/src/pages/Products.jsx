@@ -86,13 +86,20 @@ export default function Products() {
     if (searchVal) params.search = searchVal;
     if (categoryVal && categoryVal !== "Tất cả") params.category = categoryVal;
     api.get("/products", { params })
-      .then(res => setProducts(res.data?.items || res.data || []))
+      .then(res => {
+        const items = Array.isArray(res.data?.items)
+          ? res.data.items
+          : Array.isArray(res.data) ? res.data : [];
+        setProducts(items);
+      })
       .catch(() => setProducts([]))
       .finally(() => setLoading(false));
   };
 
   useEffect(() => {
-    api.get("/brands").then(res => setBrands(res.data || [])).catch(() => setBrands([]));
+    api.get("/brands")
+      .then(res => setBrands(Array.isArray(res.data) ? res.data : Array.isArray(res.data?.items) ? res.data.items : []))
+      .catch(() => setBrands([]));
     fetchProducts("", "Tất cả");
   }, []);
 
