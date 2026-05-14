@@ -409,7 +409,9 @@ export default function MyVideos() {
             {filtered.map(video => {
               const policy = POLICY_BADGE[video.tiktok_policy_status || video.policy_status];
               const policyResult = policyResults[video.id];
-              const canPublish = ["posted", "ready"].includes(video.status);
+              // Public button available for ANY non-public video — user can publish
+              // even directly from draft (they may just want to share the script).
+              const canPublish = !video.is_public;
 
               return (
                 <div key={video.id} className="bg-white border border-border rounded-[20px] overflow-hidden hover:shadow-[0_8px_24px_rgba(160,96,128,0.08)] transition-all">
