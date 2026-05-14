@@ -23,7 +23,8 @@ const PRICE_RANGES = [
 const SKIN_CONCERNS = ["Acne", "Dry skin", "Oily skin", "Dark spots", "Anti-aging", "Sensitive", "Brightening"];
 const SKIN_TYPES = ["Oily", "Dry", "Combination", "Sensitive", "Normal"];
 
-function AddProductModal({ brands, onClose, onAdded }) {
+function AddProductModal({ brands: rawBrands, onClose, onAdded }) {
+  const brands = Array.isArray(rawBrands) ? rawBrands : [];
   const [form, setForm] = useState({
     brand_id: "",
     name: "",
@@ -286,8 +287,14 @@ export default function MyProducts() {
       api.get("/products/my").catch(() => ({ data: { items: [] } })),
       api.get("/brands").catch(() => ({ data: [] })),
     ]).then(([prodRes, brandRes]) => {
-      setProducts(Array.isArray(prodRes.data) ? prodRes.data : prodRes.data?.items || []);
-      setBrands(brandRes.data || []);
+      const prodItems = Array.isArray(prodRes.data)
+        ? prodRes.data
+        : Array.isArray(prodRes.data?.items) ? prodRes.data.items : [];
+      const brandItems = Array.isArray(brandRes.data)
+        ? brandRes.data
+        : Array.isArray(brandRes.data?.items) ? brandRes.data.items : [];
+      setProducts(prodItems);
+      setBrands(brandItems);
     }).finally(() => setLoading(false));
   }, []);
 
