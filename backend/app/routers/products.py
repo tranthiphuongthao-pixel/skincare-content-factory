@@ -1,6 +1,7 @@
 import re
 import os
 import uuid
+import base64
 from fastapi import APIRouter, Depends, HTTPException, File, UploadFile
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -11,8 +12,9 @@ from app.models.database import Product, Brand, ProductReview, Video, User
 from app.dependencies import get_db, get_current_user, get_current_user_optional
 
 UPLOAD_DIR = "/app/uploads/products"
-MAX_FILE_SIZE = 5 * 1024 * 1024
+MAX_FILE_SIZE = 3 * 1024 * 1024  # 3MB source → ~4MB base64 in DB
 ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "webp"}
+MIME_MAP = {"jpg": "jpeg", "jpeg": "jpeg", "png": "png", "webp": "webp"}
 
 router = APIRouter()
 
@@ -201,13 +203,14 @@ async def upload_product_image(
         raise HTTPException(status_code=400, detail="Chỉ chấp nhận jpg, jpeg, png, webp")
     content = await file.read()
     if len(content) > MAX_FILE_SIZE:
-        raise HTTPException(status_code=400, detail="File quá lớn. Tối đa 5MB")
-    os.makedirs(UPLOAD_DIR, exist_ok=True)
-    filename = f"{uuid.uuid4().hex}.{ext}"
-    filepath = os.path.join(UPLOAD_DIR, filename)
-    with open(filepath, "wb") as f:
-        f.write(content)
-    return {"image_url": f"/uploads/products/{filename}"}
+        raise HTTPException(status_code=400, detail="File quá lớn. Tối đa 3MB")
+
+    # Encode as base64 data URL — persists with DB, survives Railway redeploys
+    # (container filesystem is ephemeral, so /uploads/* paths would 404 after deploy).
+    mime = MIME_MAP.get(ext, "jpeg")
+    b64 = base64.b64encode(content).decode()
+    data_url = f"data:image/{mime};base64,{b64}"
+    return {"image_url": data_url}
 
 
 @router.get("/", response_model=ProductListResponse)
