@@ -12,6 +12,6 @@ FROM node:20-alpine AS frontend-builder
   COPY backend/ .
   COPY --from=frontend-builder /app/dist ./static
   RUN mkdir -p /app/uploads/products
-  EXPOSE 8000
-  CMD uvicorn app.main:app --host 0.0.0.0 --port
-  ${PORT:-8000}
+  ENV PORT=8000
+  EXPOSE $PORT
+  CMD uvicorn app.main:app --host 0.0.0.0 --port $PORT
