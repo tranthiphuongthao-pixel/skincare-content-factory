@@ -29,12 +29,24 @@ export default class ErrorBoundary extends Component {
             <p className="text-text-muted text-xs mb-6 font-mono bg-bg-surface-2 rounded-xl p-3 text-left overflow-auto max-h-32">
               {this.state.error?.stack?.split("\n")[0]}
             </p>
-            <button
-              onClick={() => { this.setState({ hasError: false, error: null }); window.location.reload(); }}
-              className="btn-primary"
-            >
-              Tải lại trang
-            </button>
+            <div className="flex gap-2 justify-center">
+              <button
+                onClick={() => { this.setState({ hasError: false, error: null }); window.location.reload(); }}
+                className="btn-primary"
+              >
+                Tải lại trang
+              </button>
+              <button
+                onClick={() => {
+                  try { localStorage.clear(); } catch { /* ignore */ }
+                  try { sessionStorage.clear(); } catch { /* ignore */ }
+                  window.location.href = "/";
+                }}
+                className="btn-secondary"
+              >
+                Xóa dữ liệu cục bộ
+              </button>
+            </div>
           </div>
         </div>
       );
