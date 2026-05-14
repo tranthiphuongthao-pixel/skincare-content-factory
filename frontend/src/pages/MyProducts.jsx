@@ -293,8 +293,38 @@ export default function MyProducts() {
   const [brands, setBrands] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [uploadingFor, setUploadingFor] = useState(null);
 
   const FREE_PLAN_LIMIT = 10;
+
+  const handleImageChange = async (productId, file) => {
+    if (!file) return;
+    if (file.size > 3 * 1024 * 1024) { alert("Ảnh tối đa 3MB"); return; }
+    setUploadingFor(productId);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const up = await api.post("/products/upload-image", fd, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      const res = await api.put(`/products/${productId}`, { image_url: up.data.image_url });
+      setProducts(ps => ps.map(p => p.id === productId ? res.data : p));
+    } catch (err) {
+      alert(err.response?.data?.detail || "Đổi ảnh thất bại");
+    } finally {
+      setUploadingFor(null);
+    }
+  };
+
+  const handleDeleteProduct = async (productId) => {
+    if (!window.confirm("Xóa sản phẩm này?")) return;
+    try {
+      await api.delete(`/products/${productId}`);
+      setProducts(ps => ps.filter(p => p.id !== productId));
+    } catch (err) {
+      alert(err.response?.data?.detail || "Xóa thất bại");
+    }
+  };
 
   useEffect(() => {
     Promise.all([
@@ -376,12 +406,29 @@ export default function MyProducts() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {products.map(product => (
               <div key={product.id} className="bg-white border border-border rounded-[20px] overflow-hidden hover:border-accent/40 hover:shadow-[0_8px_24px_rgba(160,96,128,0.08)] transition-all flex flex-col">
-                <SafeImage
-                  src={product.image_url}
-                  alt={product.name}
-                  className="w-full h-36 object-cover bg-gradient-to-br from-accent/20 to-accent-dark/10"
-                  fallback={<span className="text-4xl">✨</span>}
-                />
+                <div className="relative group">
+                  <SafeImage
+                    src={product.image_url}
+                    alt={product.name}
+                    className="w-full h-36 object-cover bg-gradient-to-br from-accent/20 to-accent-dark/10"
+                    fallback={<span className="text-4xl">✨</span>}
+                  />
+                  {uploadingFor === product.id && (
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                      <span className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    </div>
+                  )}
+                  <label className="absolute bottom-2 right-2 px-2.5 py-1.5 rounded-[10px] bg-black/70 text-white text-[11px] font-medium cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                    <ImagePlus size={12} />
+                    {product.image_url ? "Đổi ảnh" : "Thêm ảnh"}
+                    <input
+                      type="file"
+                      accept=".jpg,.jpeg,.png,.webp"
+                      className="hidden"
+                      onChange={e => handleImageChange(product.id, e.target.files?.[0])}
+                    />
+                  </label>
+                </div>
                 <div className="p-4 flex flex-col flex-1 gap-2">
                   <div>
                     <h3 className="text-sm font-semibold text-text-primary leading-tight line-clamp-2">{product.name}</h3>
@@ -398,13 +445,22 @@ export default function MyProducts() {
                   <div className="flex items-center gap-2 text-xs text-text-muted mt-auto">
                     <span>{product.review_count || 0} reviews</span>
                   </div>
-                  <Link
-                    to="/create"
-                    state={{ product }}
-                    className="mt-1 flex items-center justify-center gap-1.5 w-full py-2 rounded-[12px] bg-gradient-to-r from-accent/10 to-accent-dark/5 border border-accent/20 text-xs font-medium text-accent-dark hover:from-accent/20 hover:to-accent-dark/10 transition-all"
-                  >
-                    <Wand2 size={12} /> Tạo script
-                  </Link>
+                  <div className="flex gap-1.5 mt-1">
+                    <Link
+                      to="/create"
+                      state={{ product }}
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-[12px] bg-gradient-to-r from-accent/10 to-accent-dark/5 border border-accent/20 text-xs font-medium text-accent-dark hover:from-accent/20 hover:to-accent-dark/10 transition-all"
+                    >
+                      <Wand2 size={12} /> Tạo script
+                    </Link>
+                    <button
+                      onClick={() => handleDeleteProduct(product.id)}
+                      className="px-2.5 py-2 rounded-[12px] border border-border text-xs text-red-400 hover:border-red-200 hover:bg-red-50 transition-all"
+                      title="Xóa sản phẩm"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
