@@ -26,7 +26,7 @@ const POLICY_BADGE = {
   violation: { label: "🔴 Vi phạm",  cls: "bg-red-500/10 text-red-500 border-red-200" },
 };
 
-const CREATE_VIDEO_DRAFT_KEY = "createVideoDraft";
+const CREATE_VIDEO_DRAFT_KEY = "createVideoDraft_v3";
 
 const SCENE_LABEL_COLORS = {
   "HOOK":         "bg-pink-100 text-pink-700",
@@ -247,7 +247,7 @@ function ScriptsList({ onCreateNew, onSelectScript }) {
                   {script.caption && (
                     <p className="text-sm text-text-muted leading-relaxed">{script.caption}</p>
                   )}
-                  {script.hashtags?.length > 0 && (
+                  {Array.isArray(script.hashtags) && script.hashtags.length > 0 && (
                     <div className="flex flex-wrap gap-1">
                       {script.hashtags.map((h, i) => (
                         <span key={i} className="badge bg-accent/10 text-accent-dark text-xs">#{h}</span>
@@ -301,7 +301,8 @@ function Step4ScriptDetail({ selectedOption, selectedProduct, policyFor, actionL
   };
 
   const copyCaption = () => {
-    const text = `${selectedOption.caption || ""}\n\n${(selectedOption.hashtags || []).map(t => `#${t}`).join(" ")}`;
+    const tags = Array.isArray(selectedOption.hashtags) ? selectedOption.hashtags : [];
+    const text = `${selectedOption.caption || ""}\n\n${tags.map(t => `#${t}`).join(" ")}`;
     navigator.clipboard.writeText(text);
     setCopiedCaption(true);
     setTimeout(() => setCopiedCaption(false), 2000);
@@ -444,7 +445,7 @@ function Step4ScriptDetail({ selectedOption, selectedProduct, policyFor, actionL
                 </div>
               )}
 
-              {selectedOption.props_needed?.length > 0 && (
+              {Array.isArray(selectedOption.props_needed) && selectedOption.props_needed.length > 0 && (
                 <div className="bg-amber-50 border border-amber-100 rounded-[14px] p-4">
                   <p className="text-xs font-semibold text-amber-700 mb-2 flex items-center gap-1.5">
                     <Package size={12} /> Props cần chuẩn bị
@@ -484,7 +485,7 @@ function Step4ScriptDetail({ selectedOption, selectedProduct, policyFor, actionL
                   </div>
                 </div>
               )}
-              {selectedOption.hashtags?.length > 0 && (
+              {Array.isArray(selectedOption.hashtags) && selectedOption.hashtags.length > 0 && (
                 <div>
                   <p className="text-xs uppercase tracking-[0.2em] text-text-muted font-medium mb-2">Hashtags</p>
                   <div className="flex flex-wrap gap-1.5 mb-3">
@@ -583,8 +584,13 @@ export default function Create() {
   const clearDraft = () => localStorage.removeItem(CREATE_VIDEO_DRAFT_KEY);
 
   const sanitizeOption = (opt) => {
-    if (!opt || typeof opt !== "object") return null;
-    return { ...opt, scenes: Array.isArray(opt.scenes) ? opt.scenes : [] };
+    if (!opt || typeof opt !== "object" || Array.isArray(opt)) return null;
+    return {
+      ...opt,
+      scenes: Array.isArray(opt.scenes) ? opt.scenes : [],
+      hashtags: Array.isArray(opt.hashtags) ? opt.hashtags : [],
+      props_needed: Array.isArray(opt.props_needed) ? opt.props_needed : [],
+    };
   };
 
   useEffect(() => {
@@ -612,7 +618,8 @@ export default function Create() {
     setSearchLoading(true);
     try {
       const res = await api.get("/products", { params: { search: q, limit: 10 } });
-      setProductResults(res.data?.items || res.data || []);
+      const items = Array.isArray(res.data?.items) ? res.data.items : Array.isArray(res.data) ? res.data : [];
+      setProductResults(items);
     } catch {
       setProductResults([]);
     } finally {
@@ -683,7 +690,7 @@ export default function Create() {
       hook: script.hook,
       scenes: Array.isArray(script.scenes) ? script.scenes : [],
       caption: script.caption,
-      hashtags: script.hashtags || [],
+      hashtags: Array.isArray(script.hashtags) ? script.hashtags : [],
       music_vibe: script.music_vibe,
       estimated_performance: script.estimated_performance,
       script_id: script.id,
