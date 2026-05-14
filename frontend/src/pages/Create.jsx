@@ -643,8 +643,8 @@ export default function Create() {
         product_id: selectedProduct.id,
         topic_types: [topic, selectedTopics[1] || topic],
       });
-      setOptionA(res.data.option_a);
-      setOptionB(res.data.option_b);
+      setOptionA(sanitizeOption(res.data?.option_a));
+      setOptionB(sanitizeOption(res.data?.option_b));
     } catch (err) {
       setGenerateError(err.response?.data?.detail || "Generation thất bại");
     } finally {
@@ -686,15 +686,15 @@ export default function Create() {
     if (script.product) {
       setSelectedProduct(script.product);
     }
-    setSelectedOption({
+    setSelectedOption(sanitizeOption({
       hook: script.hook,
-      scenes: Array.isArray(script.scenes) ? script.scenes : [],
+      scenes: script.scenes,
       caption: script.caption,
-      hashtags: Array.isArray(script.hashtags) ? script.hashtags : [],
+      hashtags: script.hashtags,
       music_vibe: script.music_vibe,
       estimated_performance: script.estimated_performance,
       script_id: script.id,
-    });
+    }));
     setMainTab("new");
     setStep(4);
   };
@@ -925,7 +925,7 @@ export default function Create() {
                             )}
                             <div className="flex gap-2 w-full">
                               <button
-                                onClick={() => { setSelectedOption({ ...option, _format_type: format, scenes: Array.isArray(option.scenes) ? option.scenes : [] }); setStep(4); }}
+                                onClick={() => { setSelectedOption(sanitizeOption({ ...option, _format_type: format })); setStep(4); }}
                                 className="btn-primary flex-1 justify-center text-sm py-2"
                               >
                                 Chọn option này
