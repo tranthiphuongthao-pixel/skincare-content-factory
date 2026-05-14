@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Plus, Shield, X, Star, Trash2, CheckCircle2, Send, Link2 } from "lucide-react";
+import { Plus, Shield, X, Star, Trash2, CheckCircle2, Send, Link2, FileText, Copy, Check, ChevronDown, ChevronUp } from "lucide-react";
 import api from "../api/client";
 
 const STATUS_COLORS = {
@@ -199,6 +199,97 @@ function PublishModal({ video, onClose, onPublished }) {
   );
 }
 
+function buildFullScriptText(s) {
+  if (!s) return "";
+  const lines = [];
+  if (s.hook) lines.push(`HOOK: ${s.hook}`);
+  if (Array.isArray(s.scenes)) {
+    s.scenes.forEach((sc, i) => {
+      lines.push(`\n[${sc.label || `Scene ${i + 1}`}${sc.timestamp ? ` · ${sc.timestamp}` : ""}]`);
+      if (sc.visual_direction) lines.push(`🎬 ${sc.visual_direction}`);
+      if (sc.text_on_screen) lines.push(`📱 ${sc.text_on_screen}`);
+      if (sc.voiceover) lines.push(`🎙️ "${sc.voiceover}"`);
+      if (sc.camera_tip) lines.push(`📷 ${sc.camera_tip}`);
+    });
+  }
+  if (s.caption) lines.push(`\n\nCAPTION: ${s.caption}`);
+  if (Array.isArray(s.hashtags) && s.hashtags.length) {
+    lines.push(`\nHASHTAGS: ${s.hashtags.map(h => `#${h}`).join(" ")}`);
+  }
+  if (s.music_vibe) lines.push(`\nMUSIC: ${s.music_vibe}`);
+  return lines.join("\n");
+}
+
+function ScriptDetailPanel({ script }) {
+  const [copied, setCopied] = useState(false);
+  if (!script) {
+    return (
+      <div className="text-xs text-text-muted bg-bg-surface-2 rounded-[12px] p-3">
+        Không có script kèm theo video này.
+      </div>
+    );
+  }
+  const fullText = buildFullScriptText(script);
+  const copy = () => {
+    navigator.clipboard.writeText(fullText);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+  const scenes = Array.isArray(script.scenes) ? script.scenes : [];
+  const hashtags = Array.isArray(script.hashtags) ? script.hashtags : [];
+  return (
+    <div className="border-t border-border pt-3 space-y-3">
+      {script.hook && (
+        <div className="bg-gradient-to-r from-accent/10 to-accent-dark/5 border border-accent/20 rounded-[12px] p-3">
+          <p className="text-[10px] uppercase tracking-[0.18em] text-accent font-medium mb-1">Hook</p>
+          <p className="text-sm font-display font-semibold text-text-primary">{script.hook}</p>
+        </div>
+      )}
+      {scenes.length > 0 && (
+        <div className="space-y-2">
+          {scenes.map((sc, i) => (
+            <div key={i} className="border border-border rounded-[12px] p-3 bg-white">
+              <div className="flex items-center gap-2 mb-1.5">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-bg-surface-2 text-text-muted">
+                  {sc.label || `Scene ${i + 1}`}
+                </span>
+                {sc.timestamp && (
+                  <span className="text-[10px] text-text-muted font-mono">{sc.timestamp}</span>
+                )}
+              </div>
+              {sc.visual_direction && <p className="text-xs text-text-muted">🎬 {sc.visual_direction}</p>}
+              {sc.text_on_screen && <p className="text-xs text-text-primary font-medium">📱 {sc.text_on_screen}</p>}
+              {sc.voiceover && <p className="text-xs text-text-muted italic">🎙️ "{sc.voiceover}"</p>}
+              {sc.camera_tip && <p className="text-[11px] text-blue-600 mt-1 pt-1 border-t border-border">📷 {sc.camera_tip}</p>}
+            </div>
+          ))}
+        </div>
+      )}
+      {script.caption && (
+        <div>
+          <p className="text-[10px] uppercase tracking-[0.18em] text-text-muted font-medium mb-1">Caption</p>
+          <p className="text-xs text-text-primary whitespace-pre-wrap bg-bg-surface-2 rounded-[10px] p-2.5">{script.caption}</p>
+        </div>
+      )}
+      {hashtags.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {hashtags.map((h, i) => <span key={i} className="badge bg-accent/10 text-accent-dark text-[10px]">#{h}</span>)}
+        </div>
+      )}
+      {script.music_vibe && (
+        <p className="text-xs text-text-muted">🎵 {script.music_vibe}</p>
+      )}
+      <button
+        onClick={copy}
+        className={`flex items-center justify-center gap-1.5 w-full py-2 rounded-[10px] text-xs font-medium transition-all ${copied ? "bg-emerald-50 text-emerald-600 border border-emerald-200" : "bg-bg-surface-2 text-text-muted hover:text-accent-dark border border-border"}`}
+      >
+        {copied ? <Check size={12} /> : <Copy size={12} />}
+        {copied ? "Đã copy script!" : "Copy toàn bộ script"}
+      </button>
+    </div>
+  );
+}
+
 export default function MyVideos() {
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -206,6 +297,7 @@ export default function MyVideos() {
   const [publishVideo, setPublishVideo] = useState(null);
   const [checkingPolicy, setCheckingPolicy] = useState(null);
   const [policyResults, setPolicyResults] = useState({});
+  const [expandedScript, setExpandedScript] = useState(null);
 
   useEffect(() => {
     api.get("/videos/my")
@@ -379,6 +471,15 @@ export default function MyVideos() {
                     {/* Action buttons — progressive flow based on status */}
                     <div className="flex flex-wrap gap-2">
                       <button
+                        onClick={() => setExpandedScript(s => s === video.id ? null : video.id)}
+                        className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-[12px] border border-accent/40 bg-accent/5 text-xs font-medium text-accent-dark hover:bg-accent/10 transition-all"
+                      >
+                        <FileText size={12} />
+                        {expandedScript === video.id ? "Ẩn script" : "Xem script"}
+                        {expandedScript === video.id ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                      </button>
+
+                      <button
                         onClick={() => handleCheckPolicy(video.id)}
                         disabled={checkingPolicy === video.id}
                         className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-[12px] border border-border text-xs font-medium text-text-muted hover:border-accent/40 hover:text-accent-dark transition-all disabled:opacity-60"
@@ -424,6 +525,11 @@ export default function MyVideos() {
                         <Trash2 size={12} />
                       </button>
                     </div>
+
+                    {/* Expanded script panel */}
+                    {expandedScript === video.id && (
+                      <ScriptDetailPanel script={video.script} />
+                    )}
                   </div>
                 </div>
               );
