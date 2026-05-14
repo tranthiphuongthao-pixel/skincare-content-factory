@@ -19,7 +19,7 @@ export default function ContentCalendar() {
   }, [currentDate]);
 
   useEffect(() => {
-    api.get("/products/?status=active").then(r => setProducts(r.data)).catch(() => {});
+    api.get("/products/?status=active").then(r => setProducts(r.data?.items || (Array.isArray(r.data) ? r.data : []))).catch(() => {});
   }, []);
 
   const fetchEntries = async () => {
@@ -61,7 +61,7 @@ export default function ContentCalendar() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Content Calendar</h1>
-          <p className="text-text-secondary text-sm mt-1">{entries.length} video được lên lịch</p>
+          <p className="text-text-muted text-sm mt-1">{entries.length} video được lên lịch</p>
         </div>
         <button onClick={() => setShowGenModal(true)} className="btn-primary">
           <Wand2 size={16} /> Tạo lịch AI
@@ -95,7 +95,7 @@ export default function ContentCalendar() {
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
               <Wand2 size={18} className="text-accent" /> Tạo lịch AI tháng {currentDate.getMonth() + 1}/{currentDate.getFullYear()}
             </h2>
-            <p className="text-text-secondary text-sm mb-4">Chọn sản phẩm để AI tạo lịch 30 ngày tự động</p>
+            <p className="text-text-muted text-sm mb-4">Chọn sản phẩm để AI tạo lịch 30 ngày tự động</p>
             <div className="space-y-2 max-h-60 overflow-y-auto mb-4">
               {products.map(p => (
                 <label key={p.id} className="flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-surface">
@@ -109,7 +109,7 @@ export default function ContentCalendar() {
                   />
                   <div>
                     <p className="text-sm font-medium">{p.name}</p>
-                    <p className="text-xs text-text-secondary">{p.brand} · {p.category}</p>
+                    <p className="text-xs text-text-muted">{p.brand} · {p.category}</p>
                   </div>
                 </label>
               ))}
