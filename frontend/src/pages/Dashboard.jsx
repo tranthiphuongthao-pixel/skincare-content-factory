@@ -32,8 +32,8 @@ export default function Dashboard() {
       api.get("/scripts/").catch(() => ({ data: [] })),
       api.get("/videos/my").catch(() => ({ data: [] })),
     ]).then(([scriptsRes, videosRes]) => {
-      const allScripts = scriptsRes.data || [];
-      const allVideos = videosRes.data || [];
+      const allScripts = Array.isArray(scriptsRes.data) ? scriptsRes.data : (scriptsRes.data?.items || []);
+      const allVideos = videosRes.data?.items || (Array.isArray(videosRes.data) ? videosRes.data : []);
       setScripts(allScripts.slice(0, 5));
       setVideos(allVideos.slice(0, 5));
 
