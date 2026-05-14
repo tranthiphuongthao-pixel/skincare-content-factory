@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
   Search, Check, X, RefreshCw, Plus, ChevronRight, ChevronLeft,
   Sparkles, Copy, Wand2, ClipboardCopy, Package,
@@ -553,6 +553,7 @@ function Step4ScriptDetail({ selectedOption: rawSelectedOption, selectedProduct,
 // ─── Main page ─────────────────────────────────────────────────────────────
 export default function Create() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [mainTab, setMainTab] = useState("new"); // "new" | "history"
 
   // Wizard step
@@ -596,6 +597,17 @@ export default function Create() {
   };
 
   useEffect(() => {
+    // If navigated here with a product (e.g. from "Tạo script" button on /my/products),
+    // pre-select it and skip directly to topic selection.
+    const incoming = location.state?.product;
+    if (incoming && typeof incoming === "object" && incoming.id) {
+      setSelectedProduct(incoming);
+      setStep(2);
+      setMainTab("new");
+      // Clear location.state so back-navigation doesn't keep re-applying it
+      navigate(location.pathname, { replace: true, state: {} });
+      return;
+    }
     try {
       const draft = JSON.parse(localStorage.getItem(CREATE_VIDEO_DRAFT_KEY));
       if (draft && typeof draft === "object") {
