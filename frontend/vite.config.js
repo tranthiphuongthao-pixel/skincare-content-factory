@@ -3,6 +3,13 @@ import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react()],
+  build: {
+    sourcemap: true,
+    minify: "esbuild",
+  },
+  esbuild: {
+    keepNames: true,
+  },
   server: {
     port: 3000,
     proxy: {
